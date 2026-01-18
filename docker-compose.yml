@@ -15,22 +15,17 @@ services:
       # Server
       - TZ=${TZ:-Europe/Paris}
 
-      # EasyWebMap (optional)
-      - WEBMAP_PORT=${WEBMAP_PORT:-18081}
-      - WEBMAP_WS_PORT=${WEBMAP_WS_PORT:-18082}
-
     # Ports - UDP for game, TCP for webmap
     ports:
       - "${SERVER_PORT:-5520}:5520/udp"
-      - "${WEBMAP_PORT:-18081}:${WEBMAP_PORT:-18081}/tcp"
-      - "${WEBMAP_WS_PORT:-18082}:${WEBMAP_WS_PORT:-18082}/tcp"
+      - "${WEBMAP_PORT:-18081}:8080/tcp"
     
     # Volumes - Bind Mounts (HOST_DATA_PATH -> /opt/hytale im Container)
     volumes:
-      - ${HOST_DATA_PATH:-/opt/hytale_panel}/server:/opt/hytale/server
-      - ${HOST_DATA_PATH:-/opt/hytale_panel}/data:/opt/hytale/data
-      - ${HOST_DATA_PATH:-/opt/hytale_panel}/backups:/opt/hytale/backups
-      - ${HOST_DATA_PATH:-/opt/hytale_panel}/downloader:/opt/hytale/downloader
+      - ${HOST_DATA_PATH:-/opt/hytale_panel}/server:${CONTAINER_DATA_PATH:-/opt/hytale}/server
+      - ${HOST_DATA_PATH:-/opt/hytale_panel}/data:${CONTAINER_DATA_PATH:-/opt/hytale}/data
+      - ${HOST_DATA_PATH:-/opt/hytale_panel}/backups:${CONTAINER_DATA_PATH:-/opt/hytale}/backups
+      - ${HOST_DATA_PATH:-/opt/hytale_panel}/downloader:${CONTAINER_DATA_PATH:-/opt/hytale}/downloader
 
     # Console
     stdin_open: true
@@ -70,99 +65,25 @@ services:
     environment:
       - PANEL_PASSWORD=${PANEL_PASSWORD:-changeme}
       - JWT_SECRET=${JWT_SECRET:-CHANGE_434_IT}
+      - STACK_NAME=${STACK_NAME:-hytale}
       
-      - SERVER_PATH=/opt/hytale/server
-      - BACKUPS_PATH=/opt/hytale/backups
-      - DATA_PATH=/opt/hytale/data
+      - SERVER_PATH=${HOST_DATA_PATH:-/opt/hytale_panel}/server
+      - BACKUPS_PATH=${HOST_DATA_PATH:-/opt/hytale_panel}/backups
+      - DATA_PATH=${HOST_DATA_PATH:-/opt/hytale_panel}/data
 
 
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
 
-      - ${HOST_DATA_PATH:-/opt/hytale_panel}/server:/opt/hytale/server
-      - ${HOST_DATA_PATH:-/opt/hytale_panel}/data:/opt/hytale/data
-      - ${HOST_DATA_PATH:-/opt/hytale_panel}/backups:/opt/hytale/backups
+      - ${HOST_DATA_PATH:-/opt/hytale_panel}/server:${CONTAINER_DATA_PATH:-/opt/hytale}/server
+      - ${HOST_DATA_PATH:-/opt/hytale_panel}/data:${CONTAINER_DATA_PATH:-/opt/hytale}/data
+      - ${HOST_DATA_PATH:-/opt/hytale_panel}/backups:${CONTAINER_DATA_PATH:-/opt/hytale}/backups
 
     # expose:
     #   - 80
     ports:
       - "8080:80"
       
-  # ============================================================
-  # Hytale Server Manager - Web UI
-  # ============================================================
-  # hytale-manager:
-  #   build: ./manager
-  #   container_name: ${STACK_NAME:-hytale}-manager
-  #   hostname: ${STACK_NAME:-hytale}-manager
-  #   restart: unless-stopped
-
-  #   environment:
-  #     # Authentication
-  #     - MANAGER_USERNAME=${MANAGER_USERNAME:-admin}
-  #     - MANAGER_PASSWORD=${MANAGER_PASSWORD:-changeme}
-  #     - JWT_SECRET=${JWT_SECRET:-please-change-this-secret-key-pls}
-
-  #     # Target container
-  #     - GAME_CONTAINER_NAME=${STACK_NAME:-hytale}
-
-  #     # Paths (inside container)
-  #     - SERVER_PATH=/opt/hytale/server
-  #     - BACKUPS_PATH=/opt/hytale/backups
-  #     - DATA_PATH=/opt/hytale/data
-  #     - ASSETS_PATH=/opt/hytale/assets
-
-  #     # Settings
-  #     - TZ=${TZ:-Europe/Berlin}
-
-  #     # Modtale API (optional)
-  #     - MODTALE_API_KEY=${MODTALE_API_KEY:-}
-
-  #     # StackMart API (optional)
-  #     - STACKMART_API_KEY=${STACKMART_API_KEY:-}
-
-  #   ports:
-  #     - "${MANAGER_PORT:-18080}:18080"
-
-  #   volumes:
-  #     # Docker socket for container management
-  #     - /var/run/docker.sock:/var/run/docker.sock:ro
-
-  #     # Shared volumes with game server (HOST_DATA_PATH -> /opt/hytale im Container)
-  #     # Server configs need write access for the config editor
-      # - ${HOST_DATA_PATH:-/opt/hytale_panel}/server:/opt/hytale/server
-      # - ${HOST_DATA_PATH:-/opt/hytale_panel}/data:/opt/hytale/data
-      # - ${HOST_DATA_PATH:-/opt/hytale_panel}/backups:/opt/hytale/backups
-
-  #     # Asset Explorer cache (extracted game assets)
-  #     - ${HOST_DATA_PATH:-/opt/hytale}/assets:/opt/hytale/assets
-
-  #     # Manager persistent data
-  #     - manager-data:/app/data
-
-  #   networks:
-  #     - internal-net
-
-  #   depends_on:
-  #     - hytale
-
-  #   # Logging
-  #   logging:
-  #     driver: "json-file"
-  #     options:
-  #       max-size: "10m"
-  #       max-file: "3"
-
-  #   # SECURITY: Resource limits for manager
-  #   deploy:
-  #     resources:
-  #       limits:
-  #         cpus: '1'
-  #         memory: 512M
-  #       reservations:
-  #         cpus: '0.25'
-  #         memory: 128M
-
 # ============================================================
 # Networks
 # ============================================================
@@ -171,9 +92,3 @@ networks:
     name: ${STACK_NAME:-hytale}-net
     driver: bridge
 
-# ============================================================
-# Volumes
-# ============================================================
-volumes:
-  manager-data:
-    name: ${STACK_NAME:-hytale}-manager-data

@@ -1,6 +1,6 @@
 <template>
     <section class="w-full bg-gray-800 p-4 rounded">
-        <span :class="data?.status.running ? 'text-green-500' : 'text-red-500'" class="font-bold text-2xl">
+        <span v-if="pending != true" :class="data?.status.running ? 'text-green-500' : 'text-red-500'" class="font-bold text-2xl">
             {{ data?.status.running ? 'Online' : 'Offline' }}
         </span>
     </section>
@@ -31,7 +31,11 @@ const isLoading = computed(() => {
 const command = ref('')
 const executeFetch = await useApi('/api/server/execute', { method: 'POST', immediate: false, watch: false, body: { command: command } })
 
-const { data, refresh } = await useApi('/api/panel')
+const { data, refresh, pending } = await useApi('/api/panel', { immediate: false })
+
+onMounted(() => {
+    refresh()
+})
 
 const start = async () => {
     await startFetch.execute()

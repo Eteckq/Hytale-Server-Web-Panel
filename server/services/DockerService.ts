@@ -18,8 +18,10 @@ class DockerService extends EventEmitter {
     }
 
     public async getHytaleContainer() {
-        return await this.docker.getContainer(process.env.STACK_NAME || "hytale")
-
+        // Read directly from process.env (available at runtime in Nuxt server)
+        // Docker-compose environment variables are available via process.env
+        const stackName = process.env.STACK_NAME || "hytale"
+        return await this.docker.getContainer(stackName)
     }
 
     public async getStatus() {

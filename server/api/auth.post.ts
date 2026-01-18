@@ -6,10 +6,10 @@ export default defineEventHandler(async (event) => {
     const password = body.password
 
     // Check if token is valid
-    if(password === '1234567890'){
+    if(password === process.env.PANEL_PASSWORD ){
         return {
             success: true,
-            token: jwt.sign({ password }, process.env.JWT_SECRET || 'secret', { expiresIn: '1h' }),
+            token: jwt.sign({ auth: true }, process.env.JWT_SECRET || 'secret', { expiresIn: '1h' }),
         }
     } else {
         return {

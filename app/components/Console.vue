@@ -1,7 +1,15 @@
 <template>
-    <Message class="mb-4" v-if="actionRequired" severity="info"> <a v-if="actionRequired.type === 'authorization'"
-            :href="actionRequired.url" target="_blank">{{ actionRequired.message }}</a> <span v-else><Button
-                :label="actionRequired.command" @click="emit('executeCommand', actionRequired.command)" /></span>
+    <Message class="mb-4" v-if="actionRequired" severity="info">
+        <span v-if="actionRequired.type === 'authorization'">{{ actionRequired.message }}
+        <Button>
+            <a  :href="actionRequired.url" target="_blank">{{
+                actionRequired.code }}</a>
+        </Button>
+    </span>
+        <span v-else>
+            {{ actionRequired.message }}
+            <Button :label="actionRequired.command" @click="emit('executeCommand', actionRequired.command)" />
+        </span>
     </Message>
     <section class="w-full bg-gray-900 p-4 rounded border">
         <div ref="terminalRef" class=""></div>
@@ -46,50 +54,72 @@ const handleResize = () => {
 
 
 
-function analyseLogToCheckIfActionRequired(log: string) {
-    // 1️⃣ OAuth device authorization (prioritaire)
-    const authorizationCode = log.match(/verify\?user_code=(\w+)/)?.[1]
-
-    if (authorizationCode) {
-        actionRequired.value = {
-            type: 'authorization',
-            code: authorizationCode,
-            message: `Authorization required! ${authorizationCode}`,
-            url: `https://oauth.accounts.hytale.com/oauth2/device/verify?user_code=${authorizationCode}`,
-        }
+type LogRule =
+    | {
+        patterns: RegExp[]
+        type: 'authorization'
+        handler: (match: RegExpMatchArray) => ActionRequired
+    }
+    | {
+        patterns: RegExp[]
+        type: 'command'
+        command: string
+        message?: string
     }
 
-    // 2️⃣ Command rules
-    const rules = [
+function analyseLogToCheckIfActionRequired(log: string) {
+    const rules: LogRule[] = [
         {
-            patterns: [
-                /WARNING: Credentials stored in memory only/,
-            ],
+            patterns: [/user_code=(\w+)/],
+            type: 'authorization',
+            handler: (match) => {
+                const code = match[1]
+                if (!code) {
+                    return null
+                }
+                return {
+                    type: 'authorization',
+                    code,
+                    message: `Authorization required! Click here to authorize`,
+                    url: `https://oauth.accounts.hytale.com/oauth2/device/verify?user_code=${code}`,
+                }
+            },
+        },
+        {
+            patterns: [/WARNING: Credentials stored in memory only/],
+            type: 'command',
             command: 'auth persistence Encrypted',
         },
         {
-            patterns: [
-                /No server tokens configured\. Use \/auth login to authenticate/,
-            ],
+            patterns: [/No server tokens configured\. Use \/auth login to authenticate/],
+            type: 'command',
             command: 'auth login device',
         },
     ]
 
-    const matchedRule = rules.find(({ patterns }) =>
-        patterns.some(pattern => pattern.test(log))
-    )
-
-    if (matchedRule) {
-        console.log('matchedRule', matchedRule)
-        actionRequired.value = {
-            type: 'command',
-            command: matchedRule.command,
-            message: `Action required! ${matchedRule.command}`,
+    for (const rule of rules) {
+        for (const pattern of rule.patterns) {
+            const match = log.match(pattern)
+            if (match) {
+                if (rule.type === 'authorization') {
+                    const action = rule.handler(match)
+                    if (action) {
+                        actionRequired.value = action
+                        return
+                    }
+                } else {
+                    actionRequired.value = {
+                        type: 'command',
+                        command: rule.command,
+                        message: rule.message || `Action required! Click to execute`,
+                    }
+                    return
+                }
+            }
         }
-        return
     }
 
-    // 3️⃣ Nothing to do
+    // No rule matched
     actionRequired.value = null
 }
 
@@ -114,22 +144,47 @@ onMounted(async () => {
     terminal.open(terminalRef.value)
     fitAddon.fit()
     window.addEventListener('resize', handleResize)
+
+    const logsStore = useLogsStore()
+
     try {
-        const response = await fetch('/server/logs')
-        if (!response.body) return
-
-        const reader = response.body.pipeThrough(new TextDecoderStream()).getReader()
-
-        while (true) {
-            const { value, done } = await reader.read()
-            if (done) break
-            if (value && terminal) {
-                terminal.write(value)
-                analyseLogToCheckIfActionRequired(value)
-            }
+        // Display history first
+        const history = logsStore.getLogHistory()
+        for (const log of history) {
+            terminal.write(log)
+            analyseLogToCheckIfActionRequired(log)
         }
+
+        // Setup stream with events
+        const eventTarget = await logsStore.getOrCreateEventTarget()
+
+        // Listen to data events
+        eventTarget.addEventListener('data', ((e: CustomEvent<string>) => {
+            const chunk = e.detail
+            if (terminal && chunk) {
+                terminal.write(chunk)
+                analyseLogToCheckIfActionRequired(chunk)
+            }
+        }) as EventListener)
+
+        // Listen to end events
+        eventTarget.addEventListener('end', () => {
+            if (terminal) {
+                terminal.writeln('\r\n\x1b[33mLog stream ended\x1b[0m')
+            }
+        })
+
+        // Listen to error events
+        eventTarget.addEventListener('error', ((e: CustomEvent<string>) => {
+            const error = e.detail
+            console.error('Log stream error:', error)
+            if (terminal) {
+                terminal.writeln(`\r\n\x1b[31mError: ${error}\x1b[0m`)
+            }
+        }) as EventListener)
+
     } catch (error) {
-        console.error('Error streaming logs:', error)
+        console.error('Error setting up log stream:', error)
         if (terminal) {
             terminal.writeln('\r\n\x1b[31mError: Failed to connect to log stream\x1b[0m')
         }
