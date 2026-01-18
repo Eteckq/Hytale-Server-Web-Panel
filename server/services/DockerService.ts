@@ -18,7 +18,7 @@ class DockerService extends EventEmitter {
     }
 
     public async getHytaleContainer() {
-        return await this.docker.getContainer('hytale')
+        return await this.docker.getContainer(process.env.STACK_NAME || "hytale")
 
     }
 
