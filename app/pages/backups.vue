@@ -1,7 +1,11 @@
 <template>
     <div>
+        <h2>Backups</h2>
+        <Button label="Create a manual backup" />
         <div v-if="pending != true && data != undefined">
-            {{ data }}
+            <div v-for="backup in data.backups">
+                {{ backup }}
+            </div>
         </div>
     </div>
 </template>
