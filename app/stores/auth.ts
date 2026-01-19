@@ -6,7 +6,7 @@ export const useAuthStore = defineStore('authStore', {
       httpOnly: false, // Must be false to access from JavaScript
       maxAge: 60 * 60 * 24 * 7, // 7 days
     })
-    
+
     return {
       token: tokenCookie.value,
     }

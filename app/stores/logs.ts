@@ -19,7 +19,7 @@ export const useLogsStore = defineStore('logsStore', {
     },
     async setLogStream() {
       const response = await fetch('/api/server/logs')
-      
+
       if (!response.ok || !response.body) return
 
       // Create EventTarget for events

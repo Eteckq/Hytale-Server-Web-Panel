@@ -1,11 +1,11 @@
 <template>
     <Message class="mb-4" v-if="actionRequired" severity="info">
         <span v-if="actionRequired.type === 'authorization'">{{ actionRequired.message }}
-        <Button>
-            <a  :href="actionRequired.url" target="_blank">{{
-                actionRequired.code }}</a>
-        </Button>
-    </span>
+            <Button>
+                <a :href="actionRequired.url" target="_blank">{{
+                    actionRequired.code }}</a>
+            </Button>
+        </span>
         <span v-else>
             {{ actionRequired.message }}
             <Button :label="actionRequired.command" @click="emit('executeCommand', actionRequired.command)" />

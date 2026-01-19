@@ -7,8 +7,8 @@
 </template>
 
 <script setup lang="ts">
-    const { data, refresh, pending } = await useApi('/api/backups/backups', { immediate: false })
-    onMounted(() => {
-        refresh()
-    })
+const { data, refresh, pending } = await useApi('/api/backups/backups', { immediate: false })
+onMounted(() => {
+    refresh()
+})
 </script>

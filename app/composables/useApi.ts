@@ -13,8 +13,8 @@ export const useApi: typeof useFetch = ((url: any, options: any = {}) => {
 
   watch(req.error, (value) => {
     if (value) {
-        authStore.clearToken()
-        navigateTo('/unlock')
+      authStore.clearToken()
+      navigateTo('/unlock')
     }
   })
 

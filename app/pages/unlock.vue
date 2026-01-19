@@ -6,24 +6,24 @@
 </template>
 
 <script setup lang="ts">
-    const password = ref('')
-    const authStore = useAuthStore()
+const password = ref('')
+const authStore = useAuthStore()
 
-    const isLoading = ref(false)
+const isLoading = ref(false)
 
-    onMounted(() => {
-        if(authStore.token){
-            navigateTo('/')
-        }
-    })
-    const login = async () => {
-        isLoading.value = true
-        const success = await authStore.login(password.value)
-        if(success){
-            navigateTo('/')
-        } else {
-            console.error('Login failed')
-        }
-        isLoading.value = false
+onMounted(() => {
+    if (authStore.token) {
+        navigateTo('/')
     }
+})
+const login = async () => {
+    isLoading.value = true
+    const success = await authStore.login(password.value)
+    if (success) {
+        navigateTo('/')
+    } else {
+        console.error('Login failed')
+    }
+    isLoading.value = false
+}
 </script>

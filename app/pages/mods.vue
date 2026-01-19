@@ -6,7 +6,7 @@
         </div>
         <h2>Upload a mod</h2>
         <FileUpload :multiple="false" mode="basic" name="mod" url="/api/mods/upload" accept=".jar,.zip"
-        :maxFileSize="1000000" @upload="onUpload" :auto="true" />
+            :maxFileSize="1000000" @upload="onUpload" :auto="true" />
     </div>
 </template>
 
