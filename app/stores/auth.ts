@@ -3,32 +3,35 @@ export const useAuthStore = defineStore('authStore', {
     const tokenCookie = useCookie<string | null>('token', {
       secure: true,
       sameSite: 'strict',
-      httpOnly: false,
+      httpOnly: false, // Must be false to access from JavaScript
+      maxAge: 60 * 60 * 24 * 7, // 7 days
     })
-
+    
     return {
       token: tokenCookie.value,
     }
   },
   getters: {
-    isAuthenticated: (state) => state.token !== undefined,
+    isAuthenticated(state) {
+      return state.token !== null && state.token !== undefined
+    },
   },
   actions: {
-    setToken(token: string) {
-      const tokenCookie = useCookie<string | null>('token', {
+    getCookie() {
+      return useCookie<string | null>('token', {
         secure: true,
         sameSite: 'strict',
-        httpOnly: false,
+        httpOnly: false, // Must be false to access from JavaScript
+        maxAge: 60 * 60 * 24 * 7, // 7 days
       })
+    },
+    setToken(token: string) {
+      const tokenCookie = this.getCookie()
       tokenCookie.value = token
       this.token = token
     },
     clearToken() {
-      const tokenCookie = useCookie<string | null>('token', {
-        secure: true,
-        sameSite: 'strict',
-        httpOnly: false,
-      })
+      const tokenCookie = this.getCookie()
       tokenCookie.value = null
       this.token = null
     },

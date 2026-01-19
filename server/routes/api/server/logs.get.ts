@@ -1,5 +1,5 @@
 import { defineEventHandler, setResponseHeader } from 'h3'
-import dockerService from '../../services/DockerService'
+import dockerService from '../../../services/DockerService'
 import { Readable } from 'stream'
 
 export default defineEventHandler(async (event) => {

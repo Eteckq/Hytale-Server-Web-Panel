@@ -1,6 +1,6 @@
 import dockerService from '../services/DockerService'
 
-export default defineEventHandler(async (event) => {
+const handler = defineEventHandler(async (event) => {
     return {
         status: await dockerService.getStatus(),
         stats: await dockerService.getStats(),
@@ -10,4 +10,8 @@ export default defineEventHandler(async (event) => {
             maxPlayers: 100,
         }
     }
-  })
+})
+
+export type PanelResponseData = Awaited<ReturnType<typeof handler>>
+
+export default handler

@@ -1,15 +1,6 @@
 <template>
-    <section class="w-full bg-gray-800 p-4 rounded">
-        <span v-if="pending != true" :class="data?.status.running ? 'text-green-500' : 'text-red-500'" class="font-bold text-2xl">
-            {{ data?.status.running ? 'Online' : 'Offline' }}
-        </span>
-    </section>
-    <section class="w-full my-8 flex gap-2">
-        <!-- Actions -->
-        <Button :disabled="data?.status.running || isLoading" severity="success" label="Start" @click="start" />
-        <Button :disabled="!data?.status.running || isLoading" severity="danger" label="Restart" @click="restart" />
-        <Button :disabled="!data?.status.running || isLoading" severity="danger" label="Stop" @click="stop" />
-    </section>
+    <HeaderInfo :data="data" />
+    <ActionButtons :running="data?.status.running" @refresh="refresh" />
     <Console @executeCommand="executeCommand" />
     <section class="w-full my-8 flex gap-2">
         <InputText :disabled="!data?.status.running" class="w-full" v-model="command" type="text"
@@ -20,37 +11,17 @@
 </template>
 
 <script setup lang="ts">
-const startFetch = await useApi('/api/server/start', { method: 'POST', immediate: false })
-const stopFetch = await useApi('/api/server/stop', { method: 'POST', immediate: false })
-const restartFetch = await useApi('/api/server/restart', { method: 'POST', immediate: false })
-
-const isLoading = computed(() => {
-    return startFetch.pending.value || stopFetch.pending.value || restartFetch.pending.value || executeFetch.pending.value
-})
 
 const command = ref('')
 const executeFetch = await useApi('/api/server/execute', { method: 'POST', immediate: false, watch: false, body: { command: command } })
 
-const { data, refresh, pending } = await useApi('/api/panel', { immediate: false })
+const panelResponse = await useApi('/api/panel', { immediate: false })
+const { data, refresh, pending } = panelResponse
 
 onMounted(() => {
     refresh()
 })
 
-const start = async () => {
-    await startFetch.execute()
-    await refresh()
-}
-
-const restart = async () => {
-    await restartFetch.execute()
-    await refresh()
-}
-
-const stop = async () => {
-    await stopFetch.execute()
-    await refresh()
-}
 
 const execute = async () => {
     if (command.value.trim() === '') return

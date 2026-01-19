@@ -1,14 +1,23 @@
 export const useApi: typeof useFetch = ((url: any, options: any = {}) => {
   const authStore = useAuthStore()
-  if (!authStore.token) {
-    throw new Error('Unauthorized')
+  if (!authStore.isAuthenticated) {
+    navigateTo('/unlock')
   }
 
-  return useFetch(url, {
+  const req = useFetch(url, {
     ...options,
     headers: {
-      Authorization: `Bearer ${authStore.token}`,
       ...options.headers,
     },
   })
+
+  watch(req.error, (value) => {
+    if (value) {
+        authStore.clearToken()
+        navigateTo('/unlock')
+    }
+  })
+
+
+  return req
 })
