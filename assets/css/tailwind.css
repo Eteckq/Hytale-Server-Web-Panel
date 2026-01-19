@@ -1,9 +1,8 @@
+@import "primeicons/primeicons.css";
+@import "tailwindcss-primeui";
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 
-
-@import "tailwindcss";
-@import "tailwindcss-primeui";

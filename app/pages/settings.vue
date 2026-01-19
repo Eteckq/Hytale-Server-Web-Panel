@@ -20,7 +20,7 @@
 </template>
 
 <script setup lang="ts">
-    const { data, refresh, pending } = await useApi('/api/file/file')
+    const { data, refresh, pending } = await useApi('/api/file/file', { immediate: false })
     onMounted(() => {
         refresh()
     })
