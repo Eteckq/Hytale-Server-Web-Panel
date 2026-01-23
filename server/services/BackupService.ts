@@ -1,6 +1,9 @@
 import path from 'path'
 import fs from 'fs-extra'
 import AdmZip from "adm-zip"
+import { Readable } from 'stream'
+import { pipeline } from 'stream/promises'
+
 class BackupService {
 
     private backupFolder = path.join(process.env.BACKUPS_PATH || '/opt/hytale/backups')
@@ -30,6 +33,18 @@ class BackupService {
             throw new Error('Invalid filename')
         }
         await fs.writeFile(path.join(this.backupFolder, filename), file)
+    }
+
+    async importBackupStream(fileStream: Readable, filename: string) {
+        filename = filename.replace(/[^\w.-]/g, '')
+        if (filename.includes('..')) {
+            throw new Error('Invalid filename')
+        }
+        const filePath = path.join(this.backupFolder, filename)
+        const writeStream = fs.createWriteStream(filePath)
+
+        // Utiliser pipeline pour gérer les streams de manière sécurisée
+        await pipeline(fileStream, writeStream)
     }
 
     async getBackupForDownload(backupName: string) {
@@ -74,9 +89,23 @@ class BackupService {
             throw new Error('Backup not found')
         }
 
-        await fs.remove(path.join(process.env.DATA_PATH || '/opt/hytale/data'))
-        const zip = new AdmZip(path.join(this.backupFolder, backupName))
-        zip.extractAllTo(path.join(process.env.DATA_PATH || '/opt/hytale/data'), true)
+        const dataPath = path.join(process.env.DATA_PATH || '/opt/hytale/data')
+
+        await fs.remove(dataPath)
+
+        return new Promise( (resolve) => {
+            const zip = new AdmZip(path.join(this.backupFolder, backupName))
+            zip.extractAllToAsync(dataPath, true, false, async () => {
+                // If dataPath contains exactly one folder and nothing else, move the content of this folder to the parent
+                const folder = await fs.readdir(dataPath)
+                if(folder.length === 1 && (await fs.stat(path.join(dataPath, folder[0]))).isDirectory()){
+                    await fs.move(path.join(dataPath, folder[0]), '/tmp/hytale-backup-restore', { overwrite: true })
+                    await fs.move('/tmp/hytale-backup-restore', dataPath, { overwrite: true })
+                    await fs.remove(path.join(dataPath, folder[0]))
+                }
+                resolve(true)
+            })
+        })
     }
 }
 
