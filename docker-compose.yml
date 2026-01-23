@@ -11,9 +11,10 @@ services:
       # Java / RAM
       - JAVA_MIN_RAM=${JAVA_MIN_RAM:-3G}
       - JAVA_MAX_RAM=${JAVA_MAX_RAM:-4G}
-      
+      - HYTALE_PATCHLINE=${HYTALE_PATCHLINE:-release}
       # Server
       - TZ=${TZ:-Europe/Paris}
+
 
     # Ports - UDP for game, TCP for webmap
     ports:
@@ -70,6 +71,7 @@ services:
       - SERVER_PATH=${CONTAINER_DATA_PATH:-/opt/hytale_panel}/server
       - BACKUPS_PATH=${CONTAINER_DATA_PATH:-/opt/hytale_panel}/backups
       - DATA_PATH=${CONTAINER_DATA_PATH:-/opt/hytale_panel}/data
+      - DOWNLOADER_PATH=${CONTAINER_DATA_PATH:-/opt/hytale_panel}/downloader
 
 
     volumes:

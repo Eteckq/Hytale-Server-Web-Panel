@@ -47,6 +47,10 @@ class ModService {
     }
 
     public async writeFileInModDirectory(file: Buffer, filename: string) {
+        filename = filename.replace(/[^\w.-]/g, '')
+        if (filename.includes('..')) {
+            throw new Error('Invalid filename')
+        }
         await fs.writeFile(path.join(this.modFolder, filename), file)
     }
 }

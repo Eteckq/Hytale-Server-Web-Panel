@@ -1,15 +1,10 @@
 <template>
-    <Message class="mb-4" v-if="actionRequired" severity="info">
-        <span v-if="actionRequired.type === 'authorization'">{{ actionRequired.message }}
-            <Button>
-                <a :href="actionRequired.url" target="_blank">{{
-                    actionRequired.code }}</a>
-            </Button>
-        </span>
-        <span v-else>
-            {{ actionRequired.message }}
-            <Button :label="actionRequired.command" @click="emit('executeCommand', actionRequired.command)" />
-        </span>
+    <Message class="mb-4 p-2" v-if="actionRequired" severity="warn">
+        {{ actionRequired.message }}:
+        <a v-if="actionRequired.type === 'authorization'" class="ml-8 bg-green-600 text-white rounded px-4 py-2" :href="actionRequired.url" target="_blank">
+            Authorize device <span class="italic">{{ actionRequired.code }}</span>
+        </a>
+        <Button v-else :label="actionRequired.command" @click="emit('executeCommand', actionRequired.command)" />
     </Message>
     <section class="w-full bg-gray-900 p-4 rounded border">
         <div ref="terminalRef" class=""></div>
@@ -68,6 +63,8 @@ type LogRule =
     }
 
 function analyseLogToCheckIfActionRequired(log: string) {
+    // Start from end of log
+    const logToAnalyse = log.split('\n').reverse().join('\n')
     const rules: LogRule[] = [
         {
             patterns: [/user_code=(\w+)/],
@@ -89,6 +86,7 @@ function analyseLogToCheckIfActionRequired(log: string) {
             patterns: [/WARNING: Credentials stored in memory only/],
             type: 'command',
             command: 'auth persistence Encrypted',
+            message: `Authorization recommended: Click here set persistence auth`,
         },
         {
             patterns: [/No server tokens configured\. Use \/auth login to authenticate/],
@@ -99,7 +97,7 @@ function analyseLogToCheckIfActionRequired(log: string) {
 
     for (const rule of rules) {
         for (const pattern of rule.patterns) {
-            const match = log.match(pattern)
+            const match = logToAnalyse.match(pattern)
             if (match) {
                 if (rule.type === 'authorization') {
                     const action = rule.handler(match)

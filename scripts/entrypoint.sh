@@ -101,7 +101,7 @@ run_downloader() {
         echo "[INFO] Extraction complete!"
 
         cd "$DOWNLOADER_DIR"
-        INSTALLED_VER=$(./hytale-downloader-linux-amd64 -patchline "$PATCHLINE" -print-version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+        INSTALLED_VER=$(./hytale-downloader-linux-amd64 -patchline "$PATCHLINE" -print-version 2>/dev/null)
         if [ -n "$INSTALLED_VER" ]; then
             echo "$INSTALLED_VER" > "$VERSION_FILE"
             echo "[INFO] Saved version $INSTALLED_VER to $VERSION_FILE"

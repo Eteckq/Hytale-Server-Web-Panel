@@ -23,6 +23,15 @@ class BackupService {
         return backupsWithStats
     }
 
+
+    async importBackup(file: Buffer, filename: string) {
+        filename = filename.replace(/[^\w.-]/g, '')
+        if (filename.includes('..')) {
+            throw new Error('Invalid filename')
+        }
+        await fs.writeFile(path.join(this.backupFolder, filename), file)
+    }
+
     async getBackupForDownload(backupName: string) {
         backupName = backupName.replace(/[^\w.-]/g, '')
         if (backupName.includes('..')) {
