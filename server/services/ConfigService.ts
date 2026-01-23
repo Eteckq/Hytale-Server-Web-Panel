@@ -2,8 +2,6 @@
  * Interaction with config.json file
  */
 import fs from 'fs-extra'
-import path from 'path'
-import { fileURLToPath } from 'url'
 
 interface Config {
     patchline: string
@@ -28,7 +26,7 @@ class ConfigService {
         }
     }
 
-    
+
 
     /**
      * Get config.json file

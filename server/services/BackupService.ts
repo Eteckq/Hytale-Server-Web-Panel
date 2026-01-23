@@ -23,12 +23,12 @@ class BackupService {
 
     async getBackupForDownload(backupName: string) {
         backupName = backupName.replace(/[^\w.-]/g, '')
-        if(backupName.includes('..')){
+        if (backupName.includes('..')) {
             throw new Error('Invalid backup name')
         }
         const backupsPath = path.join(process.env.BACKUPS_PATH || '/opt/hytale/backups')
         const backupPath = path.join(backupsPath, backupName)
-        if(!await fs.pathExists(backupPath)){
+        if (!await fs.pathExists(backupPath)) {
             throw new Error('Backup not found')
         }
         return fs.readFile(backupPath)
@@ -37,7 +37,7 @@ class BackupService {
     async createBackup() {
         const backupsPath = path.join(process.env.BACKUPS_PATH || '/opt/hytale/backups')
         const timestamp = Date.now()
-        const cleanDate = new Date(timestamp).toISOString().replace(/[:.]/g, '-')
+        const cleanDate = new Date(timestamp).toISOString().replace(/[:.]/g, '-').split('T')[0] + '_' + Math.random().toString(36).substring(2, 6)
         const backupName = `backup_${cleanDate}.zip`
         const backupPath = path.join(backupsPath, backupName)
 
@@ -48,7 +48,7 @@ class BackupService {
 
     async deleteBackup(backupName: string) {
         backupName = backupName.replace(/[^\w.-]/g, '')
-        if(backupName.includes('..')){
+        if (backupName.includes('..')) {
             throw new Error('Invalid backup name')
         }
         const backupsPath = path.join(process.env.BACKUPS_PATH || '/opt/hytale/backups')
@@ -57,13 +57,13 @@ class BackupService {
 
     async restoreBackup(backupName: string) {
         backupName = backupName.replace(/[^\w.-]/g, '')
-        if(backupName.includes('..')){
+        if (backupName.includes('..')) {
             throw new Error('Invalid backup name')
         }
         const backupsPath = path.join(process.env.BACKUPS_PATH || '/opt/hytale/backups')
 
         let backupPath = path.join(backupsPath, backupName)
-        if(!await fs.pathExists(backupPath)){
+        if (!await fs.pathExists(backupPath)) {
             throw new Error('Backup not found')
         }
 
