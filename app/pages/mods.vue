@@ -2,16 +2,16 @@
     <div>
         <h2 class="text-2xl font-bold">Installed Mods</h2>
         <div class="flex gap-2 flex-col mt-4" v-if="pending != true && data != undefined">
-            <ModsMod :mod="mod" v-for="mod in data.installed" />
+            <ModsMod :mod="mod" v-for="mod in data.installed" @refresh="refresh()"/>
         </div>
-        <h2>Upload a mod</h2>
-        <FileUpload :multiple="false" mode="basic" name="mod" url="/api/mods/upload" accept=".jar,.zip"
+        <FileUpload :chooseLabel="'Upload a mod'" :multiple="false" mode="basic" name="mod" url="/api/mods/upload" accept=".jar,.zip"
             @upload="onUpload" :auto="true" />
     </div>
 </template>
 
 <script setup lang="ts">
 const { data, refresh, pending } = await useApi('/api/mods/mods', { immediate: false })
+export type Mod = (typeof data.value.installed)[number]
 onMounted(() => {
     refresh()
 })

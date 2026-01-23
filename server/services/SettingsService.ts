@@ -34,11 +34,17 @@ class SettingsService {
     }
 
     async getLastVersion() {
-        const downloaderBin = await this.getDownloaderBin()
-        const { stdout, stderr } = await execPromise(`${downloaderBin} -print-version -patchline ${await this.getPatchline()} -skip-update-check`);
-        if (stderr) console.error('stderr:', stderr);
+        try {
 
-        return stdout
+            const downloaderBin = await this.getDownloaderBin()
+            const { stdout, stderr } = await execPromise(`${downloaderBin} -print-version -patchline ${await this.getPatchline()} -skip-update-check`);
+            if (stderr) console.error('stderr:', stderr);
+            
+            return stdout
+        } catch (error) {
+            console.error('Error getting last version:', error);
+            return null
+        }
     }
 
     async getPatchline() {

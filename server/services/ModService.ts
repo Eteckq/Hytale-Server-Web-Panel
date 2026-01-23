@@ -8,13 +8,24 @@ import { extractModName, extractModVersion } from '../utils/modNameExtractor'
 class ModService {
 
     private modFolder: string = path.join(process.env.DATA_PATH || '/opt/hytale/data', 'mods')
+    private disabledModFolder: string = path.join(process.env.DATA_PATH || '/opt/hytale/data', 'mods_disabled')
 
     constructor() {
 
     }
 
     private async readModFolder(): Promise<string[]> {
+        if(!await fs.pathExists(this.modFolder)){
+            return []
+        }
         return await fs.readdir(this.modFolder)
+    }
+
+    private async readDisabledModFolder(): Promise<string[]> {
+        if(!await fs.pathExists(this.disabledModFolder)){
+            return []
+        }
+        return await fs.readdir(this.disabledModFolder)
     }
 
 
@@ -27,19 +38,39 @@ class ModService {
         }
     }
 
+
+    public  async toggleMod(file: string) {
+        // Move mod in a folder mod_disabled
+        if(!await fs.pathExists(this.disabledModFolder)){
+            await fs.mkdir(this.disabledModFolder)
+        }
+
+        // if file existes in mod_disabled, move it to mod. Else, if exists in mod move it to mod_disabled
+        if(await fs.pathExists(path.join(this.disabledModFolder, file))){
+            await fs.move(path.join(this.disabledModFolder, file), path.join(this.modFolder, file))
+            return true
+        }
+        if(await fs.pathExists(path.join(this.modFolder, file))){
+            await fs.move(path.join(this.modFolder, file), path.join(this.disabledModFolder, file))
+            return false
+        }
+
+    }
+
     public async scanOnlyModFiles() {
         const modContent = await this.readModFolder()
+        const disabledModContent = await this.readDisabledModFolder()
         const mods = []
-        for (const file of modContent) {
+        for (const file of [...modContent, ...disabledModContent]) {
             if (file.endsWith('.zip') || file.endsWith('.jar')) {
-                // Extract mod name and version using utility functions
                 const name = extractModName(file)
                 const version = extractModVersion(file)
                 mods.push({
                     file: file,
                     name,
                     version,
-                    directoryConfig: await this.getFolderConfigFromModname(name)
+                    directoryConfig: await this.getFolderConfigFromModname(name),
+                    enabled: !disabledModContent.includes(file)
                 })
             }
         }
@@ -51,6 +82,11 @@ class ModService {
         if (filename.includes('..')) {
             throw new Error('Invalid filename')
         }
+
+        if(!await fs.pathExists(this.modFolder)){
+            await fs.mkdir(this.modFolder)
+        }
+
         await fs.writeFile(path.join(this.modFolder, filename), file)
     }
 }
