@@ -1,7 +1,5 @@
 <template>
-   <div>
-    Clean settings viewer
-   </div>
+   <FileTree initialPath="" />
 </template>
 
 <script setup lang="ts">

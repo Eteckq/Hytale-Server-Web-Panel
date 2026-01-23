@@ -1,10 +1,11 @@
 <template>
-    <div>
+    <div class="flex gap-4 h-full">
         <Tree @nodeSelect="onNodeSelect" :value="nodes" @node-expand="onNodeExpand" loadingMode="icon"
-            class="w-full md:w-[30rem]" selectionMode="single"></Tree>
-        <div v-if="selectedNode">
+            class="w-full h-full overflow-y-scroll" selectionMode="single"></Tree>
+        <div v-if="selectedNode" class="w-full h-full">
+            <p class="text-sm text-gray-500">{{ selectedNode.data.path }}</p>
             <Textarea v-model="selectedNode.data.content" class="w-full" rows="20" />
-            <Button label="Save" @click="saveContent" />
+            <Button class="w-full" label="Save" @click="saveContent" />
         </div>
     </div>
 </template>
@@ -48,7 +49,7 @@ const fetchFolder = async (subpath: string = "") => {
             label: item.name,
             leaf: item.type === 'file',
             loading: false,
-            icon: item.type === 'directory' ? 'pi pi-fw pi-folder' : 'pi pi-fw pi-file',
+            icon: item.type === 'directory' ? 'pi  pi-folder' : item.content ? 'pi  pi-pencil' : 'pi  pi-file-o',
             data: {
                 content: item.content,
                 path: item.path
@@ -69,8 +70,10 @@ const onNodeExpand = async (node: TreeNode) => {
     node.loading = false
 };
 
-const onNodeSelect = (event: any) => {
-    selectedNode.value = event
+const onNodeSelect = (event: TreeNode) => {
+    if (event.data.content) {
+        selectedNode.value = event
+    }
 }
 
 </script>

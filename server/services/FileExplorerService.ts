@@ -3,13 +3,14 @@ import path from 'path'
 
 class FileExplorerService {
     async getFiles(subpath: string) {
-        // Sanitize subpath to prevent path traversal FIXME
-        if(subpath.includes('.')){
+        // sanitize subpath to prevent path traversal
+        if(subpath.includes('..')){
             throw new Error('Invalid path')
         }
         const finalPath = path.join(process.env.DATA_PATH || '/opt/hytale/data', subpath)
         // Check if exists
         if(!await fs.pathExists(finalPath)){
+            console.log('File not found');
             return []
         }
         const filesAndFolders = await fs.readdir(finalPath, { withFileTypes: true })
@@ -30,7 +31,6 @@ class FileExplorerService {
     }
 
     async editFile(filePath: string, content: string){
-
         if(filePath.includes('..')){
             throw new Error('Invalid path')
         }

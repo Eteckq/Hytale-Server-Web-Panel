@@ -37,6 +37,11 @@ const items = ref([
         to: '/settings',
     },
     {
+        label: 'Files',
+        icon: 'pi pi-file',
+        to: '/files',
+    },
+    {
         label: 'Mods',
         icon: 'pi pi-download',
         to: '/mods',
