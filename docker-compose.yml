@@ -79,10 +79,10 @@ services:
       - ${HOST_DATA_PATH:-/opt/hytale_panel}/data:${CONTAINER_DATA_PATH:-/opt/hytale}/data
       - ${HOST_DATA_PATH:-/opt/hytale_panel}/backups:${CONTAINER_DATA_PATH:-/opt/hytale}/backups
 
-    # expose:
-    #   - 80
-    ports:
-      - "8080:80"
+    expose:
+      - 80
+    # ports:
+    #   - "8080:80"
       
 # ============================================================
 # Networks
