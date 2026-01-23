@@ -1,9 +1,9 @@
-import fs from 'fs-extra'
+import fileExplorerService from '~~/server/services/FileExplorerService'
 
 export default defineEventHandler(async (event) => {
+    // get subpath from query params
+    const subpath = getQuery(event).subpath as string
     return {
-        data: await fs.readdir(process.env.DATA_PATH || '/opt/hytale/data'),
-        backups: await fs.readdir(process.env.BACKUPS_PATH || '/opt/hytale/backups'),
-        server: await fs.readdir(process.env.SERVER_PATH || '/opt/hytale/server'),
+        data: await fileExplorerService.getFiles(subpath)
     }
 })

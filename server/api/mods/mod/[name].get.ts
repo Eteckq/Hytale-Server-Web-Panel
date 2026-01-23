@@ -12,6 +12,6 @@ export default defineEventHandler(async (event) => {
     }
 
     return {
-        config: await modService.getFolderConfigContentFromModName(modName)
+        config: await modService.getFolderConfigFromModname(modName)
     }
 })

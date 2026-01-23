@@ -1,11 +1,17 @@
 <template>
     <div class="flex flex-col items-center justify-center h-screen gap-4">
-        <InputText type="password" v-model="password" />
+        <InputText @keyup.enter="login" type="password" v-model="password" />
         <Button @click="login" :loading="isLoading">Access</Button>
     </div>
 </template>
 
 <script setup lang="ts">
+
+definePageMeta({
+    layout: 'unauth',
+})
+
+
 const password = ref('')
 const authStore = useAuthStore()
 

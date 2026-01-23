@@ -4,12 +4,7 @@ export const useApi: typeof useFetch = ((url: any, options: any = {}) => {
     navigateTo('/unlock')
   }
 
-  const req = useFetch(url, {
-    ...options,
-    headers: {
-      ...options.headers,
-    },
-  })
+  const req = useFetch(url, options)
 
   watch(req.error, (value) => {
     if (value) {

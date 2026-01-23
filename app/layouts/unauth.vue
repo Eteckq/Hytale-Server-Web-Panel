@@ -1,8 +1,6 @@
 <template>
-   <FileTree initialPath="" />
+    <slot />
 </template>
 
 <script setup lang="ts">
-
-
 </script>
