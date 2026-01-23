@@ -43,12 +43,12 @@ const items = ref([
     },
     {
         label: 'Mods',
-        icon: 'pi pi-download',
+        icon: 'pi pi-wrench',
         to: '/mods',
     },
     {
         label: 'Backups',
-        icon: 'pi pi-download',
+        icon: 'pi pi-save',
         to: '/backups',
     },
 ])

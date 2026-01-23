@@ -67,9 +67,9 @@ services:
       - JWT_SECRET=${JWT_SECRET:-CHANGE_434_IT}
       - STACK_NAME=${STACK_NAME:-hytale}
       
-      - SERVER_PATH=${HOST_DATA_PATH:-/opt/hytale_panel}/server
-      - BACKUPS_PATH=${HOST_DATA_PATH:-/opt/hytale_panel}/backups
-      - DATA_PATH=${HOST_DATA_PATH:-/opt/hytale_panel}/data
+      - SERVER_PATH=${CONTAINER_DATA_PATH:-/opt/hytale_panel}/server
+      - BACKUPS_PATH=${CONTAINER_DATA_PATH:-/opt/hytale_panel}/backups
+      - DATA_PATH=${CONTAINER_DATA_PATH:-/opt/hytale_panel}/data
 
 
     volumes:

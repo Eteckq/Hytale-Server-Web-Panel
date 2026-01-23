@@ -6,7 +6,7 @@
             <span class="text-gray-500 mx-4">{{ mod.directoryConfig }}</span>
             <!-- <i class="pi pi-times w-6 h-6" /> -->
             <Button v-if="mod.directoryConfig"
-                v-tooltip="'Edit configuration'" icon="pi pi-cog" class="cursor-pointer w-6 h-6" @click="visible = true"
+                v-tooltip.left="'Edit configuration'" icon="pi pi-cog" class="cursor-pointer w-6 h-6" @click="visible = true"
                  />
         </div>
     </div>

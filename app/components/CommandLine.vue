@@ -1,6 +1,6 @@
 <template>
     <section class="w-full my-8 flex gap-2">
-        <InputText :disabled="!running" class="w-full" v-model="command" type="text" placeholder="Send a command" />
+        <InputText @keyup.enter="execute" :disabled="!running" class="w-full" v-model="command" type="text" placeholder="Send a command" />
         <Button :disabled="command.trim() === '' || !running" label="Execute" @click="execute" />
     </section>
 </template>
