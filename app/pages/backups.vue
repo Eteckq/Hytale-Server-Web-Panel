@@ -1,6 +1,6 @@
 <template>
     <div>
-        <Button label="Create a backup" @click="createBackup" />
+        <Button class="mb-8" label="Create a backup" @click="createBackup" />
         <div v-if="pending != true && data != undefined" class="flex flex-wrap gap-4">
 
             <Card v-for="backup in data.backups">
@@ -9,7 +9,7 @@
                 </template>
                 <template #content>
                 <div class="flex gap-2">
-                    <Button v-tooltip.top="'Download backup'" icon="pi pi-user" severity="info" rounded aria-label="Download" @click="downloadBackup(backup.name)" />
+                    <Button v-tooltip.top="'Download backup'" icon="pi pi-download" severity="info" rounded aria-label="Download" @click="downloadBackup(backup.name)" />
                     <Button v-tooltip.top="'Delete backup'" icon="pi pi-trash" severity="warn" rounded aria-label="Delete" @click="confirmDeleteBackup(backup.name)" />
                     <Button v-tooltip.top="'Restore backup'" icon="pi pi-undo" severity="danger" rounded aria-label="Restore" @click="confirmRestoreBackup(backup.name)" />
                 </div>
