@@ -17,34 +17,46 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     jq \
     tzdata \
     ca-certificates \
+    gosu \
     && rm -rf /var/lib/apt/lists/*
 # Note: Timezone is set at runtime in entrypoint.sh using TZ env variable
 
 # ============================================================
-# Create directories
+# Build arguments for user UID/GID
+# ============================================================
+ARG HYTALE_UID=9000
+ARG HYTALE_GID=9000
+
+# ============================================================
+# Create non-root user with specific UID/GID
+# ============================================================
+RUN groupadd -r -g ${HYTALE_GID} hytale && \
+    useradd -r -u ${HYTALE_UID} -g hytale -d /opt/hytale -s /bin/bash hytale
+
+# ============================================================
+# Create directories and set ownership
 # ============================================================
 RUN  mkdir -p /opt/hytale/server \
                 /opt/hytale/data \
                 /opt/hytale/backups \
-                /opt/hytale/downloader
+                /opt/hytale/downloader \
+    && chown -R hytale:hytale /opt/hytale
 
 WORKDIR /opt/hytale
 
 # ============================================================
-# Copy scripts
+# Copy scripts and set ownership
 # ============================================================
 COPY --chmod=755 scripts/entrypoint.sh /opt/hytale/entrypoint.sh
 COPY --chmod=755 scripts/start-server.sh /opt/hytale/start-server.sh
+COPY --chmod=755 scripts/docker-entrypoint.sh /opt/hytale/docker-entrypoint.sh
+RUN chown hytale:hytale /opt/hytale/entrypoint.sh /opt/hytale/start-server.sh /opt/hytale/docker-entrypoint.sh
 
 # ============================================================
 # Expose UDP port (QUIC protocol)
 # ============================================================
 EXPOSE 5520/udp
 
-# ============================================================
-# Health check
-# ============================================================
-HEALTHCHECK --interval=60s --timeout=10s --start-period=180s --retries=3 \
-    CMD pgrep -f "HytaleServer.jar" > /dev/null || exit 1
-
-ENTRYPOINT ["/opt/hytale/entrypoint.sh"]
+# Keep running as root for the wrapper script to fix permissions
+# The wrapper will switch to hytale user
+ENTRYPOINT ["/opt/hytale/docker-entrypoint.sh"]

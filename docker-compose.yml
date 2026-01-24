@@ -3,6 +3,9 @@ services:
     build:
       context: .
       dockerfile: DockerfileHytale
+      args:
+        HYTALE_UID: ${HYTALE_UID:-9000}
+        HYTALE_GID: ${HYTALE_GID:-9000}
     container_name: ${STACK_NAME:-hytale}
     hostname: ${STACK_NAME:-hytale}
     restart: on-failure:3
@@ -14,6 +17,9 @@ services:
       - HYTALE_PATCHLINE=${HYTALE_PATCHLINE:-release}
       # Server
       - TZ=${TZ:-Europe/Paris}
+      # User permissions
+      - HYTALE_UID=${HYTALE_UID:-9000}
+      - HYTALE_GID=${HYTALE_GID:-9000}
 
 
     # Ports - UDP for game, TCP for webmap
@@ -62,16 +68,17 @@ services:
     container_name: ${STACK_NAME:-hytale}-manager
     hostname: ${STACK_NAME:-hytale}-manager
     restart: unless-stopped
+    user: ${HYTALE_UID:-9000}:${HYTALE_GID:-9000}
 
     environment:
       - PANEL_PASSWORD=${PANEL_PASSWORD:-changeme}
       - JWT_SECRET=${JWT_SECRET:-CHANGE_434_IT}
       - STACK_NAME=${STACK_NAME:-hytale}
       
-      - SERVER_PATH=${CONTAINER_DATA_PATH:-/opt/hytale_panel}/server
-      - BACKUPS_PATH=${CONTAINER_DATA_PATH:-/opt/hytale_panel}/backups
-      - DATA_PATH=${CONTAINER_DATA_PATH:-/opt/hytale_panel}/data
-      - DOWNLOADER_PATH=${CONTAINER_DATA_PATH:-/opt/hytale_panel}/downloader
+      - SERVER_PATH=${CONTAINER_DATA_PATH:-/opt/hytale}/server
+      - BACKUPS_PATH=${CONTAINER_DATA_PATH:-/opt/hytale}/backups
+      - DATA_PATH=${CONTAINER_DATA_PATH:-/opt/hytale}/data
+      - DOWNLOADER_PATH=${CONTAINER_DATA_PATH:-/opt/hytale}/downloader
 
 
     volumes:

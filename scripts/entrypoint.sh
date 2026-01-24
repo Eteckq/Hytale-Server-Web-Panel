@@ -1,20 +1,6 @@
 #!/bin/bash
 # ============================================================
 # Hytale Server - Entrypoint
-# ============================================================
-
-# ============================================================
-# Set timezone at runtime from TZ environment variable
-# ============================================================
-if [ -n "$TZ" ] && [ -f "/usr/share/zoneinfo/$TZ" ]; then
-    ln -snf /usr/share/zoneinfo/$TZ /etc/localtime
-    echo $TZ > /etc/timezone
-    echo "[INFO] Timezone set to: $TZ"
-else
-    echo "[WARN] Invalid or missing TZ variable, using default timezone"
-fi
-
-# ============================================================
 # Check/Download server files
 # ============================================================
 echo "[INFO] Checking server files..."

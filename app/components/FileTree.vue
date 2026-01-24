@@ -49,7 +49,7 @@ const fetchFolder = async (subpath: string = "") => {
     const data = await $fetch(`/api/file/file?subpath=${subpath}`)
     const nodes: TreeNode[] = data.data.map((item) => {
         return {
-            key: item.name,
+            key: item.path,
             label: item.name,
             leaf: item.type === 'file',
             loading: false,

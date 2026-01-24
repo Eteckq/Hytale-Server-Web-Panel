@@ -78,38 +78,22 @@ class BackupService {
         await fs.remove(path.join(this.backupFolder, backupName))
     }
 
-    /**
-     * Supprime récursivement le contenu d'un dossier avec retry en cas d'erreur EBUSY
-     */
-    private async removeDirectoryContents(dirPath: string, retries: number = 3): Promise<void> {
+    private async removeDirectoryContents(dirPath: string): Promise<void> {
         if (!await fs.pathExists(dirPath)) {
             return
         }
 
         const items = await fs.readdir(dirPath)
-        
+
         for (const item of items) {
             const itemPath = path.join(dirPath, item)
-            let attempts = retries
-            
-            while (attempts > 0) {
-                try {
-                    const stats = await fs.stat(itemPath)
-                    if (stats.isDirectory()) {
-                        await this.removeDirectoryContents(itemPath, retries)
-                        await fs.remove(itemPath)
-                    } else {
-                        await fs.remove(itemPath)
-                    }
-                    break
-                } catch (error: any) {
-                    if ((error.code === 'EBUSY' || error.code === 'ENOENT') && attempts > 1) {
-                        attempts--
-                        await new Promise(resolve => setTimeout(resolve, 500))
-                    } else {
-                        throw error
-                    }
-                }
+
+            const stats = await fs.stat(itemPath)
+            if (stats.isDirectory()) {
+                await this.removeDirectoryContents(itemPath)
+                await fs.remove(itemPath)
+            } else {
+                await fs.remove(itemPath)
             }
         }
     }
@@ -179,7 +163,7 @@ class BackupService {
             await fs.remove(tempExtractPath)
         } catch (error) {
             // Nettoyer en cas d'erreur
-            await fs.remove(tempExtractPath).catch(() => {})
+            await fs.remove(tempExtractPath).catch(() => { })
             throw error
         }
     }

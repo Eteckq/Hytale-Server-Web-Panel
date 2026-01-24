@@ -6,9 +6,6 @@ import util from "util"
 
 const execPromise = util.promisify(exec);
 
-// check if downloader bin exists
-
-
 
 class SettingsService {
 
@@ -23,7 +20,7 @@ class SettingsService {
             return null
         }
         const content = await fs.readFile(versionPath, 'utf8')
-        return content
+        return content.trim()
     }
 
 
@@ -37,10 +34,13 @@ class SettingsService {
         try {
 
             const downloaderBin = await this.getDownloaderBin()
-            const { stdout, stderr } = await execPromise(`${downloaderBin} -print-version -patchline ${await this.getPatchline()} -skip-update-check`);
+            const patchline = await this.getPatchline()
+            const credentialsPath = path.join(this.downloaderPath, '.hytale-downloader-credentials.json')
+
+            const { stdout, stderr } = await execPromise(`${downloaderBin} -print-version -patchline ${patchline} -skip-update-check -credentials-path ${credentialsPath}`);
             if (stderr) console.error('stderr:', stderr);
             
-            return stdout
+            return stdout.trim()
         } catch (error) {
             console.error('Error getting last version:', error);
             return null
