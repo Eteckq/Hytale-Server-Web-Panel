@@ -78,6 +78,42 @@ class BackupService {
         await fs.remove(path.join(this.backupFolder, backupName))
     }
 
+    /**
+     * Supprime récursivement le contenu d'un dossier avec retry en cas d'erreur EBUSY
+     */
+    private async removeDirectoryContents(dirPath: string, retries: number = 3): Promise<void> {
+        if (!await fs.pathExists(dirPath)) {
+            return
+        }
+
+        const items = await fs.readdir(dirPath)
+        
+        for (const item of items) {
+            const itemPath = path.join(dirPath, item)
+            let attempts = retries
+            
+            while (attempts > 0) {
+                try {
+                    const stats = await fs.stat(itemPath)
+                    if (stats.isDirectory()) {
+                        await this.removeDirectoryContents(itemPath, retries)
+                        await fs.remove(itemPath)
+                    } else {
+                        await fs.remove(itemPath)
+                    }
+                    break
+                } catch (error: any) {
+                    if ((error.code === 'EBUSY' || error.code === 'ENOENT') && attempts > 1) {
+                        attempts--
+                        await new Promise(resolve => setTimeout(resolve, 500))
+                    } else {
+                        throw error
+                    }
+                }
+            }
+        }
+    }
+
     async restoreBackup(backupName: string) {
         backupName = backupName.replace(/[^\w.-]/g, '')
         if (backupName.includes('..')) {
@@ -91,7 +127,6 @@ class BackupService {
 
         const dataPath = path.join(process.env.DATA_PATH || '/opt/hytale/data')
         const tempExtractPath = path.join('/tmp', `hytale-restore-${Date.now()}`)
-        const oldDataPath = path.join('/tmp', `hytale-old-data-${Date.now()}`)
 
         try {
             // Extraire dans un dossier temporaire
@@ -121,37 +156,30 @@ class BackupService {
             }
 
             // Attendre un peu pour que le serveur libère les fichiers
-            await new Promise(resolve => setTimeout(resolve, 1000))
+            await new Promise(resolve => setTimeout(resolve, 2000))
 
-            // Supprimer l'ancien dossier avec retry en cas d'erreur EBUSY
+            // Vider le contenu du dossier de destination au lieu de le déplacer
+            // Cela évite les erreurs EBUSY sur le dossier lui-même
             if (await fs.pathExists(dataPath)) {
-                let retries = 5
-                while (retries > 0) {
-                    try {
-                        await fs.move(dataPath, oldDataPath, { overwrite: true })
-                        break
-                    } catch (error: any) {
-                        if (error.code === 'EBUSY' && retries > 1) {
-                            retries--
-                            await new Promise(resolve => setTimeout(resolve, 1000))
-                        } else {
-                            throw error
-                        }
-                    }
-                }
+                await this.removeDirectoryContents(dataPath, 5)
+            } else {
+                // Créer le dossier s'il n'existe pas
+                await fs.ensureDir(dataPath)
             }
 
-            // Déplacer le nouveau dossier à la place de l'ancien
-            await fs.move(tempExtractPath, dataPath, { overwrite: true })
+            // Copier le contenu du dossier temporaire vers la destination
+            const newContents = await fs.readdir(tempExtractPath)
+            for (const item of newContents) {
+                const sourcePath = path.join(tempExtractPath, item)
+                const destPath = path.join(dataPath, item)
+                await fs.move(sourcePath, destPath, { overwrite: true })
+            }
 
-            // Supprimer l'ancien dossier en arrière-plan (ne pas bloquer)
-            fs.remove(oldDataPath).catch(() => {
-                // Ignorer les erreurs de suppression de l'ancien dossier
-            })
+            // Nettoyer le dossier temporaire
+            await fs.remove(tempExtractPath)
         } catch (error) {
             // Nettoyer en cas d'erreur
             await fs.remove(tempExtractPath).catch(() => {})
-            await fs.remove(oldDataPath).catch(() => {})
             throw error
         }
     }
