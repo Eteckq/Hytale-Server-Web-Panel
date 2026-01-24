@@ -68,7 +68,6 @@ services:
     container_name: ${STACK_NAME:-hytale}-manager
     hostname: ${STACK_NAME:-hytale}-manager
     restart: unless-stopped
-    user: ${HYTALE_UID:-9000}:${HYTALE_GID:-9000}
 
     environment:
       - PANEL_PASSWORD=${PANEL_PASSWORD:-changeme}
