@@ -1,6 +1,7 @@
-import backupService from '~~/server/services/BackupService'
 import Busboy from 'busboy'
 import { Readable } from 'stream'
+import path from 'path'
+import fileExplorerService from '~~/server/services/FileExplorerService'
 
 export default defineEventHandler(async (event) => {
     return new Promise((resolve, reject) => {
@@ -15,8 +16,16 @@ export default defineEventHandler(async (event) => {
 
         const busboy = Busboy({ headers: { 'content-type': contentType } })
         let filename: string | null = null
+        let filePath: string | null = null
         let fileStream: Readable | null = null
         let uploadPromise: Promise<void> | null = null
+
+        // Handle form fields (like 'path')
+        busboy.on('field', (name, value) => {
+            if (name === 'path') {
+                filePath = value as string
+            }
+        })
 
         busboy.on('file', (name, stream, info) => {
             const { filename: fname } = info
@@ -25,11 +34,17 @@ export default defineEventHandler(async (event) => {
                 return
             }
             
+            if (!filePath) {
+                stream.resume()
+                reject(new Error('Path field is required'))
+                return
+            }
+            
             filename = fname
             fileStream = stream
-            
-            // Commencer l'upload immédiatement avec le stream
-            uploadPromise = backupService.importBackupStream(stream, fname)
+            const finalPath: string = path.join("/opt/hytale", filePath)
+
+            uploadPromise = fileExplorerService.importStream(stream, fname, finalPath)
                 .catch((error) => {
                     reject(error)
                 })
@@ -47,7 +62,7 @@ export default defineEventHandler(async (event) => {
                 await uploadPromise
                 resolve({
                     success: true,
-                    message: 'Backup imported'
+                    message: 'File imported'
                 })
             } catch (error) {
                 // Error already handled in file handler

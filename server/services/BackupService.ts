@@ -26,27 +26,6 @@ class BackupService {
         return backupsWithStats
     }
 
-
-    async importBackup(file: Buffer, filename: string) {
-        filename = filename.replace(/[^\w.-]/g, '')
-        if (filename.includes('..')) {
-            throw new Error('Invalid filename')
-        }
-        await fs.writeFile(path.join(this.backupFolder, filename), file)
-    }
-
-    async importBackupStream(fileStream: Readable, filename: string) {
-        filename = filename.replace(/[^\w.-]/g, '')
-        if (filename.includes('..')) {
-            throw new Error('Invalid filename')
-        }
-        const filePath = path.join(this.backupFolder, filename)
-        const writeStream = fs.createWriteStream(filePath)
-
-        // Utiliser pipeline pour gérer les streams de manière sécurisée
-        await pipeline(fileStream, writeStream)
-    }
-
     async getBackupForDownload(backupName: string) {
         backupName = backupName.replace(/[^\w.-]/g, '')
         if (backupName.includes('..')) {

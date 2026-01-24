@@ -21,6 +21,26 @@ if [ "$(id -u)" -eq 0 ]; then
         fi
     done
     
+    # Setup persistent machine-id for encrypted auth (requires root)
+    MACHINE_ID_FILE="/opt/hytale/.machine-id"
+    if [ ! -f "$MACHINE_ID_FILE" ]; then
+        echo "[INFO] Generating persistent machine-id..."
+        # Generate a random UUID-style machine-id
+        cat /proc/sys/kernel/random/uuid | tr -d '-' > "$MACHINE_ID_FILE"
+        chown ${HYTALE_UID}:${HYTALE_GID} "$MACHINE_ID_FILE"
+    fi
+    
+    # Link to /etc/machine-id (used by Hytale for encryption key)
+    if [ -f "$MACHINE_ID_FILE" ]; then
+        cp "$MACHINE_ID_FILE" /etc/machine-id 2>/dev/null || true
+        chmod 444 /etc/machine-id 2>/dev/null || true
+        # Also setup dbus machine-id
+        mkdir -p /var/lib/dbus
+        cp "$MACHINE_ID_FILE" /var/lib/dbus/machine-id 2>/dev/null || true
+        chmod 444 /var/lib/dbus/machine-id 2>/dev/null || true
+        echo "[INFO] Machine-ID configured for auth persistence"
+    fi
+    
     echo "[INFO] Permissions fixed! Switching to user hytale (UID: ${HYTALE_UID})..."
     
     # Switch to hytale user and execute the actual entrypoint

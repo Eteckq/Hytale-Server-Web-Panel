@@ -17,6 +17,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     jq \
     tzdata \
     ca-certificates \
+    dbus \
     gosu \
     && rm -rf /var/lib/apt/lists/*
 # Note: Timezone is set at runtime in entrypoint.sh using TZ env variable

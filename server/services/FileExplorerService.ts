@@ -1,5 +1,7 @@
 import fs from 'fs-extra'
 import path from 'path'
+import { Readable } from 'stream';
+import { pipeline } from 'stream/promises'
 
 class FileExplorerService {
     async getFiles(subpath: string) {
@@ -48,6 +50,19 @@ class FileExplorerService {
             success: true,
             message: 'File edited successfully'
         }
+    }
+
+    async importStream(fileStream: Readable, filename: string, finalPath: string) {
+        if (filename.includes('..')) {
+            throw new Error('Invalid filename')
+        }
+        if (finalPath.includes('..')) {
+            throw new Error('Invalid path')
+        }
+        const filePath = path.join(finalPath, filename)
+        const writeStream = fs.createWriteStream(filePath)
+    
+        await pipeline(fileStream, writeStream)
     }
 }
 

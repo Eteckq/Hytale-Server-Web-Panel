@@ -1,23 +1,24 @@
 <template>
     <div>
-        <h2 class="text-2xl font-bold">Settings</h2>
-        {{ pending }}
-        <div class="flex gap-2 flex-col mt-4">
-            {{ data }}
-        </div>
-
         <Card>
             <template #title>
-                Update server
+                Server version
             </template>
             <template #content>
-                <p>Here, you can update the server version.</p>
-
-                <p>by clicking on this button, server files (Assets.zip & HytaleServer.jar) will be deleted</p>
-                <p>Server container will be started, to download these files again</p>
-                <Button label="Re-install server" @click="confirmDeleteServer" />
+                <p>Patchline version: {{ data?.patchline }} <Badge v-tooltip.top="'Change the patchline by changing environment variable HYTALE_PATCHLINE and restarting the manager'"><i  class="pi pi-info"></i></Badge></p>
+                <p>Installed version: {{ data?.installedVersion }}</p>
+                <p>Last version: {{ data?.lastVersion }}</p>
+            </template>
+            <template #footer>
+                <div class="flex gap-4 mt-1">
+                    <Button :loading="pending" :label="data?.lastVersion == data?.installedVersion ? 'Force update server' : 'Update server'"
+                        :severity="data?.lastVersion == data?.installedVersion ? 'info' : 'warn'" class="w-full"
+                        @click="confirmDeleteServer()" />
+                </div>
             </template>
         </Card>
+
+
 
     </div>
 </template>
@@ -34,7 +35,7 @@ onMounted(async () => {
 
 const confirmDeleteServer = async () => {
     confirm.require({
-        message: 'Are you sure you want to reinstall the server ? Only server files will be deleted & re-installed',
+        message: 'Are you sure you want to reinstall the server ? Only server files will be deleted & re-installed. Doing a backup before is recommended.',
         header: 'Confirmation',
         icon: 'pi pi-exclamation-triangle',
         rejectProps: {

@@ -2,7 +2,14 @@
     <div>
         <Button class="mb-8" label="Create a backup" @click="createBackup" />
 
-        <BackupImport @refresh="refresh()" />
+
+        <p>Import a backup</p>
+        <p>Here, you can import a backup file</p>
+        <p>Only .zip files are supported</p>
+        <p>Then, you will be able to import the backup to the server</p>
+        <Uploader :chooseLabel="'Upload a backup'" :multiple="false" accept=".zip" :path="'backups'"
+            @upload="refresh" />
+
 
         <div v-if="pending != true && data != undefined" class="flex flex-wrap gap-4">
             <Backup :backup="backup" v-for="backup in data.backups" @refresh="refresh()" />
