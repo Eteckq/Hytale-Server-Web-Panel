@@ -5,7 +5,7 @@
         <div v-if="selectedNode" class="w-full h-full">
             <p class="text-sm text-gray-500">{{ selectedNode.data.path }}</p>
             <Textarea v-model="selectedNode.data.content" class="w-full" rows="20" />
-            <Button class="w-full" label="Save" @click="saveContent" />
+            <Button :loading="loading" class="w-full" label="Save" @click="saveContent" />
         </div>
     </div>
 </template>
@@ -23,12 +23,15 @@ const props = defineProps<{
 const selectedNode = ref<TreeNode | null>(null)
 const nodes: Ref<TreeNode[]> = ref([]);
 
+const loading = ref(false)
+
 
 const saveContent = async () => {
     if (!selectedNode.value) {
         return
     }
-    await fetch(`/api/file/edit`, {
+    loading.value = true
+    await $fetch(`/api/file/edit`, {
         method: "PATCH",
         body: JSON.stringify({
             path: selectedNode.value.data.path,
@@ -38,6 +41,7 @@ const saveContent = async () => {
             'Content-Type': 'application/json',
         },
     })
+    loading.value = false
     toast.add({ severity: 'info', summary: 'Success', detail: 'File modified', life: 3000 })
 }
 

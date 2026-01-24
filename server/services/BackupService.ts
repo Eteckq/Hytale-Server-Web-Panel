@@ -90,22 +90,70 @@ class BackupService {
         }
 
         const dataPath = path.join(process.env.DATA_PATH || '/opt/hytale/data')
+        const tempExtractPath = path.join('/tmp', `hytale-restore-${Date.now()}`)
+        const oldDataPath = path.join('/tmp', `hytale-old-data-${Date.now()}`)
 
-        await fs.remove(dataPath)
-
-        return new Promise( (resolve) => {
-            const zip = new AdmZip(path.join(this.backupFolder, backupName))
-            zip.extractAllToAsync(dataPath, true, false, async () => {
-                // If dataPath contains exactly one folder and nothing else, move the content of this folder to the parent
-                const folder = await fs.readdir(dataPath)
-                if(folder.length === 1 && (await fs.stat(path.join(dataPath, folder[0]))).isDirectory()){
-                    await fs.move(path.join(dataPath, folder[0]), '/tmp/hytale-backup-restore', { overwrite: true })
-                    await fs.move('/tmp/hytale-backup-restore', dataPath, { overwrite: true })
-                    await fs.remove(path.join(dataPath, folder[0]))
-                }
-                resolve(true)
+        try {
+            // Extraire dans un dossier temporaire
+            await new Promise<void>((resolve, reject) => {
+                const zip = new AdmZip(backupPath)
+                zip.extractAllToAsync(tempExtractPath, true, false, (error) => {
+                    if (error) {
+                        reject(error)
+                    } else {
+                        resolve()
+                    }
+                })
             })
-        })
+
+            // Si le dossier temporaire contient exactement un dossier, déplacer son contenu au niveau parent
+            const extractedContents = await fs.readdir(tempExtractPath)
+            if (extractedContents.length === 1) {
+                const singleItem = path.join(tempExtractPath, extractedContents[0])
+                const stats = await fs.stat(singleItem)
+                if (stats.isDirectory()) {
+                    // Déplacer le contenu du sous-dossier vers le dossier temporaire
+                    const tempParent = path.join('/tmp', `hytale-restore-flatten-${Date.now()}`)
+                    await fs.move(singleItem, tempParent, { overwrite: true })
+                    await fs.remove(tempExtractPath)
+                    await fs.move(tempParent, tempExtractPath, { overwrite: true })
+                }
+            }
+
+            // Attendre un peu pour que le serveur libère les fichiers
+            await new Promise(resolve => setTimeout(resolve, 1000))
+
+            // Supprimer l'ancien dossier avec retry en cas d'erreur EBUSY
+            if (await fs.pathExists(dataPath)) {
+                let retries = 5
+                while (retries > 0) {
+                    try {
+                        await fs.move(dataPath, oldDataPath, { overwrite: true })
+                        break
+                    } catch (error: any) {
+                        if (error.code === 'EBUSY' && retries > 1) {
+                            retries--
+                            await new Promise(resolve => setTimeout(resolve, 1000))
+                        } else {
+                            throw error
+                        }
+                    }
+                }
+            }
+
+            // Déplacer le nouveau dossier à la place de l'ancien
+            await fs.move(tempExtractPath, dataPath, { overwrite: true })
+
+            // Supprimer l'ancien dossier en arrière-plan (ne pas bloquer)
+            fs.remove(oldDataPath).catch(() => {
+                // Ignorer les erreurs de suppression de l'ancien dossier
+            })
+        } catch (error) {
+            // Nettoyer en cas d'erreur
+            await fs.remove(tempExtractPath).catch(() => {})
+            await fs.remove(oldDataPath).catch(() => {})
+            throw error
+        }
     }
 }
 

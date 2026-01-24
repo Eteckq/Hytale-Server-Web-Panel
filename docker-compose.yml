@@ -80,6 +80,7 @@ services:
       - ${HOST_DATA_PATH:-/opt/hytale_panel}/server:${CONTAINER_DATA_PATH:-/opt/hytale}/server
       - ${HOST_DATA_PATH:-/opt/hytale_panel}/data:${CONTAINER_DATA_PATH:-/opt/hytale}/data
       - ${HOST_DATA_PATH:-/opt/hytale_panel}/backups:${CONTAINER_DATA_PATH:-/opt/hytale}/backups
+      - ${HOST_DATA_PATH:-/opt/hytale_panel}/downloader:${CONTAINER_DATA_PATH:-/opt/hytale}/downloader
 
     expose:
       - 80
