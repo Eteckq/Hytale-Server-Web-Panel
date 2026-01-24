@@ -1,7 +1,9 @@
 <template>
     <div>
-        <FileUpload mode="basic" :chooseLabel="chooseLabel" :multiple="multiple" @select="onFileSelect" name="file"
-            customUpload :accept="accept" />
+        <FileUpload :auto="true" mode="basic" :chooseLabel="chooseLabel" :multiple="multiple" @select="onFileSelect" name="file"
+            customUpload :accept="accept" >
+        </FileUpload>
+
         <Dialog v-model:visible="showModal" modal header="Upload Progress" :closable="false" :closeOnEscape="false">
             <ProgressBar :pt="{ 'value': { 'style': { 'transition': 'width 50ms' } } }" class="transition-none"
                 max="100" min="0" :value="progress" />

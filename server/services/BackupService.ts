@@ -124,7 +124,7 @@ class BackupService {
             // Vider le contenu du dossier de destination au lieu de le déplacer
             // Cela évite les erreurs EBUSY sur le dossier lui-même
             if (await fs.pathExists(dataPath)) {
-                await this.removeDirectoryContents(dataPath, 5)
+                await this.removeDirectoryContents(dataPath)
             } else {
                 // Créer le dossier s'il n'existe pas
                 await fs.ensureDir(dataPath)

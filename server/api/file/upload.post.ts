@@ -24,6 +24,9 @@ export default defineEventHandler(async (event) => {
         busboy.on('field', (name, value) => {
             if (name === 'path') {
                 filePath = value as string
+                if(filePath.includes('..')){
+                    reject(new Error('Invalid path'))
+                }
             }
         })
 
