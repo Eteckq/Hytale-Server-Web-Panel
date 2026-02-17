@@ -6,7 +6,7 @@
                 {{ data?.status.running ? 'Online' : 'Offline' }}
             </span>
             <span v-if="data.stats.memory_mb && data.stats.memory_limit_mb" class="text-gray-500">{{ Math.round(data.stats.memory_mb / 1024) }}GB / {{ data.stats.memory_limit_mb / 1024 }}GB</span>
-            <span v-if="data.stats.memory_percent">{{ data.stats.memory_percent }}%</span>
+            <span v-if="data.status.port" class="text-gray-500">Port: {{ data.status.port }}</span>
         </div>
     </section>
 </template>

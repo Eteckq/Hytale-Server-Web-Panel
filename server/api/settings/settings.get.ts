@@ -3,8 +3,8 @@ import SettingsService from '~~/server/services/SettingsService'
 export default defineEventHandler(async (event) => {
 
     return {
-        patchline: await SettingsService.getPatchline(),
-        lastVersion: await SettingsService.getLastVersion(),
+        patchline: SettingsService.getPatchline(),
+        lastVersion: SettingsService.getCachedLastVersion(),
         installedVersion: await SettingsService.installedVersion()
     }
 })

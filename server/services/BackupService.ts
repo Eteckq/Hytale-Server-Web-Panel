@@ -1,8 +1,7 @@
 import path from 'path'
 import fs from 'fs-extra'
 import AdmZip from "adm-zip"
-import { Readable } from 'stream'
-import { pipeline } from 'stream/promises'
+import { sanitizeFilename } from '../utils/sanitize'
 
 class BackupService {
 
@@ -11,6 +10,7 @@ class BackupService {
 
     async getBackups() {
         const backups = (await fs.readdir(this.backupFolder)).filter(file => file.endsWith('.zip'))
+
         const backupsWithStats = await Promise.all(backups.map(async backup => {
             const backupPath = path.join(this.backupFolder, backup)
             const stats = await fs.stat(backupPath)
@@ -22,15 +22,12 @@ class BackupService {
             }
         }))
 
-        backupsWithStats.sort((a, b) => b.date.getTime() - a.date.getTime())
-        return backupsWithStats
+        return backupsWithStats.sort((a, b) => b.date.getTime() - a.date.getTime())
     }
 
     async getBackupForDownload(backupName: string) {
-        backupName = backupName.replace(/[^\w.-]/g, '')
-        if (backupName.includes('..')) {
-            throw new Error('Invalid backup name')
-        }
+        backupName = sanitizeFilename(backupName)
+        
         const backupPath = path.join(this.backupFolder, backupName)
         if (!await fs.pathExists(backupPath)) {
             throw new Error('Backup not found')
@@ -50,10 +47,7 @@ class BackupService {
     }
 
     async deleteBackup(backupName: string) {
-        backupName = backupName.replace(/[^\w.-]/g, '')
-        if (backupName.includes('..')) {
-            throw new Error('Invalid backup name')
-        }
+        backupName = sanitizeFilename(backupName)
         await fs.remove(path.join(this.backupFolder, backupName))
     }
 
@@ -78,10 +72,7 @@ class BackupService {
     }
 
     async restoreBackup(backupName: string) {
-        backupName = backupName.replace(/[^\w.-]/g, '')
-        if (backupName.includes('..')) {
-            throw new Error('Invalid backup name')
-        }
+        backupName = sanitizeFilename(backupName)
 
         let backupPath = path.join(this.backupFolder, backupName)
         if (!await fs.pathExists(backupPath)) {

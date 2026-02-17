@@ -6,9 +6,9 @@ services:
       args:
         HYTALE_UID: ${HYTALE_UID:-9000}
         HYTALE_GID: ${HYTALE_GID:-9000}
-    container_name: ${STACK_NAME:-hytale}
-    hostname: ${STACK_NAME:-hytale}
     restart: on-failure:3
+    labels:
+      - "hytale.server=${IDENTIFIER:-hytale}"
     
     environment:
       # Java / RAM
@@ -22,28 +22,20 @@ services:
       - HYTALE_GID=${HYTALE_GID:-9000}
 
 
-    # Ports - UDP for game, TCP for webmap
+    # Ports - UDP for game
     ports:
-      - "${SERVER_PORT:-5520}:5520/udp"
-      - "${WEBMAP_PORT:-18081}:8080/tcp"
+      - ${HYTALE_SEVER_PORT:-5520}:5520/udp
     
     # Volumes - Bind Mounts (HOST_DATA_PATH -> /opt/hytale im Container)
     volumes:
-      - ${HOST_DATA_PATH:-/opt/hytale_panel}/server:${CONTAINER_DATA_PATH:-/opt/hytale}/server
-      - ${HOST_DATA_PATH:-/opt/hytale_panel}/data:${CONTAINER_DATA_PATH:-/opt/hytale}/data
-      - ${HOST_DATA_PATH:-/opt/hytale_panel}/backups:${CONTAINER_DATA_PATH:-/opt/hytale}/backups
-      - ${HOST_DATA_PATH:-/opt/hytale_panel}/downloader:${CONTAINER_DATA_PATH:-/opt/hytale}/downloader
+      - ${HOST_DATA_PATH:-/opt/hytale}/server:/opt/hytale/server
+      - ${HOST_DATA_PATH:-/opt/hytale}/data:/opt/hytale/data
+      - ${HOST_DATA_PATH:-/opt/hytale}/backups:/opt/hytale/backups
+      - ${HOST_DATA_PATH:-/opt/hytale}/downloader:/opt/hytale/downloader
 
     # Console
     stdin_open: true
     tty: true
-    
-    # Logging
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "50m"
-        max-file: "5"
 
     # Network for manager communication
     networks:
@@ -64,40 +56,38 @@ services:
   # Hytale Server Manager - Web UI
   # ============================================================
   hytale-manager:
-    build: .
-    container_name: ${STACK_NAME:-hytale}-manager
-    hostname: ${STACK_NAME:-hytale}-manager
+    build:
+      context: .
+      dockerfile: Dockerfile
     restart: unless-stopped
 
     environment:
       - PANEL_PASSWORD=${PANEL_PASSWORD:-changeme}
       - JWT_SECRET=${JWT_SECRET:-CHANGE_434_IT}
-      - STACK_NAME=${STACK_NAME:-hytale}
       
-      - SERVER_PATH=${CONTAINER_DATA_PATH:-/opt/hytale}/server
-      - BACKUPS_PATH=${CONTAINER_DATA_PATH:-/opt/hytale}/backups
-      - DATA_PATH=${CONTAINER_DATA_PATH:-/opt/hytale}/data
-      - DOWNLOADER_PATH=${CONTAINER_DATA_PATH:-/opt/hytale}/downloader
+      - SERVER_PATH=/opt/hytale/server
+      - BACKUPS_PATH=/opt/hytale/backups
+      - DATA_PATH=/opt/hytale/data
+      - DOWNLOADER_PATH=/opt/hytale/downloader
+      - IDENTIFIER=${IDENTIFIER:-hytale}
 
 
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
 
-      - ${HOST_DATA_PATH:-/opt/hytale_panel}/server:${CONTAINER_DATA_PATH:-/opt/hytale}/server
-      - ${HOST_DATA_PATH:-/opt/hytale_panel}/data:${CONTAINER_DATA_PATH:-/opt/hytale}/data
-      - ${HOST_DATA_PATH:-/opt/hytale_panel}/backups:${CONTAINER_DATA_PATH:-/opt/hytale}/backups
-      - ${HOST_DATA_PATH:-/opt/hytale_panel}/downloader:${CONTAINER_DATA_PATH:-/opt/hytale}/downloader
+      - ${HOST_DATA_PATH:-/opt/hytale}/server:/opt/hytale/server
+      - ${HOST_DATA_PATH:-/opt/hytale}/data:/opt/hytale/data
+      - ${HOST_DATA_PATH:-/opt/hytale}/backups:/opt/hytale/backups
+      - ${HOST_DATA_PATH:-/opt/hytale}/downloader:/opt/hytale/downloader
 
-    expose:
+    ports:
       - 80
-    # ports:
-    #   - "8080:80"
       
 # ============================================================
 # Networks
 # ============================================================
 networks:
   internal-net:
-    name: ${STACK_NAME:-hytale}-net
+    name: ${IDENTIFIER:-hytale}-net
     driver: bridge
 

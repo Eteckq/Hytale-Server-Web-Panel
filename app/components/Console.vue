@@ -64,7 +64,7 @@ type LogRule =
 
 function analyseLogToCheckIfActionRequired(log: string) {
     // Start from end of log
-    const logToAnalyse = log.split('\n').reverse().join('\n')
+    const logToAnalyse = log.split('\n').reverse().slice(0, 50).join('\n')
     const rules: LogRule[] = [
         {
             patterns: [/user_code=(\w+)/],
@@ -86,7 +86,7 @@ function analyseLogToCheckIfActionRequired(log: string) {
             patterns: [/WARNING: Credentials stored in memory only/],
             type: 'command',
             command: 'auth persistence Encrypted',
-            message: `Authorization recommended: Click here set persistence auth`,
+            message: `Authorization recommendation: Click here set persistence auth`,
         },
         {
             patterns: [/No server tokens configured\. Use \/auth login to authenticate/],

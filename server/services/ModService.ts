@@ -3,6 +3,7 @@
 import fs from 'fs-extra'
 import path from 'path'
 import { extractModName, extractModVersion } from '../utils/modNameExtractor'
+import { sanitizeFilename } from '../utils/sanitize'
 
 
 class ModService {
@@ -15,21 +16,21 @@ class ModService {
     }
 
     private async readModFolder(): Promise<string[]> {
-        if(!await fs.pathExists(this.modFolder)){
+        if (!await fs.pathExists(this.modFolder)) {
             return []
         }
         return await fs.readdir(this.modFolder)
     }
 
     private async readDisabledModFolder(): Promise<string[]> {
-        if(!await fs.pathExists(this.disabledModFolder)){
+        if (!await fs.pathExists(this.disabledModFolder)) {
             return []
         }
         return await fs.readdir(this.disabledModFolder)
     }
 
 
-    public async getFolderConfigFromModname(modName: string){
+    public async getFolderConfigFromModname(modName: string) {
         const modFolders = await fs.readdir(this.modFolder)
         for (const folder of modFolders.filter(folder => fs.statSync(path.join(this.modFolder, folder)).isDirectory())) {
             if (folder.toLowerCase().includes(modName.toLowerCase())) {
@@ -39,22 +40,25 @@ class ModService {
     }
 
 
-    public  async toggleMod(file: string) {
+    public async toggleMod(file: string) {
+
+        file = sanitizeFilename(file)
+
         // Move mod in a folder mod_disabled
-        if(!await fs.pathExists(this.disabledModFolder)){
+        if (!await fs.pathExists(this.disabledModFolder)) {
             await fs.mkdir(this.disabledModFolder)
         }
 
         // if file existes in mod_disabled, move it to mod. Else, if exists in mod move it to mod_disabled
-        if(await fs.pathExists(path.join(this.disabledModFolder, file))){
+        if (await fs.pathExists(path.join(this.disabledModFolder, file))) {
             await fs.move(path.join(this.disabledModFolder, file), path.join(this.modFolder, file))
             return true
         }
-        if(await fs.pathExists(path.join(this.modFolder, file))){
+        if (await fs.pathExists(path.join(this.modFolder, file))) {
             await fs.move(path.join(this.modFolder, file), path.join(this.disabledModFolder, file))
             return false
         }
-
+        throw new Error('Mod not found')
     }
 
     public async scanOnlyModFiles() {
@@ -78,12 +82,9 @@ class ModService {
     }
 
     public async writeFileInModDirectory(file: Buffer, filename: string) {
-        filename = filename.replace(/[^\w.-]/g, '')
-        if (filename.includes('..')) {
-            throw new Error('Invalid filename')
-        }
+        filename = sanitizeFilename(filename)
 
-        if(!await fs.pathExists(this.modFolder)){
+        if (!await fs.pathExists(this.modFolder)) {
             await fs.mkdir(this.modFolder)
         }
 

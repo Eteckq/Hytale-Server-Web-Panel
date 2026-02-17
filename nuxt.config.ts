@@ -9,6 +9,14 @@ export default defineNuxtConfig({
     '@nuxtjs/tailwindcss',
     '@pinia/nuxt'
   ],
+  app: {
+    head: {
+      title: 'Hytale Panel',
+      link: [
+        { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
+      ],
+    },
+  },
   primevue: {
       options: {
           theme: {

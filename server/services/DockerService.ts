@@ -6,22 +6,48 @@ class DockerService extends EventEmitter {
     private docker: Docker
     public currentLogStream: Readable | null = null
     private currentAttachStream: NodeJS.ReadWriteStream | null = null
-    private streamTimestamp: number = 0
+
     private logHistory: Buffer[] = []
     private readonly maxHistorySize = 10000 // Max 10KB of history
 
     constructor() {
         super()
         this.docker = new Docker({ socketPath: '/var/run/docker.sock' })
-        // Increase max listeners to avoid warnings with multiple clients
-        this.setMaxListeners(0)
+        // this.setMaxListeners(0)
     }
 
+    private cachedContainerName: string | null = null
+
     public async getHytaleContainer() {
-        // Read directly from process.env (available at runtime in Nuxt server)
-        // Docker-compose environment variables are available via process.env
-        const stackName = process.env.STACK_NAME || "hytale"
-        return await this.docker.getContainer(stackName)
+        // If we have a cached container name, try to use it first
+        if (this.cachedContainerName) {
+            try {
+                return await this.docker.getContainer(this.cachedContainerName)
+            } catch (error) {
+                // Container name changed or doesn't exist, clear cache
+                this.cachedContainerName = null
+            }
+        }
+
+        // Try to find container by label
+        try {
+            const containers = await this.docker.listContainers({ all: true })
+            
+            // Look for container with hytale.server label
+            const hytaleContainer = containers.find(container => 
+                container.Labels && container.Labels['hytale.server'] === process.env.IDENTIFIER
+            )
+
+            if (hytaleContainer && hytaleContainer.Names && hytaleContainer.Names.length > 0) {
+                // Remove leading slash from container name
+                const containerName = hytaleContainer.Names[0].replace(/^\//, '')
+                this.cachedContainerName = containerName
+                return await this.docker.getContainer(containerName)
+            }
+        } catch (error) {
+            throw new Error(`Could not find Hytale container. Tried: label 'hytale.server=${process.env.IDENTIFIER}'`)
+        }
+
     }
 
     public async getStatus() {
@@ -35,6 +61,7 @@ class DockerService extends EventEmitter {
                 name: info.Name.replace('/', ''),
                 created: info.Created,
                 started_at: info.State.StartedAt,
+                port: info.NetworkSettings?.Ports?.['5520/udp'][0].HostPort
             };
         } catch (error) {
             return {
@@ -82,7 +109,7 @@ class DockerService extends EventEmitter {
 
     public async start() {
         const container = await this.getHytaleContainer();
-        // Stop container if it is running
+
         if ((await container.inspect()).State.Running) {
             return { success: false, message: 'Container is already running' };
         }
@@ -180,7 +207,6 @@ class DockerService extends EventEmitter {
             this.currentLogStream.destroy();
             this.currentLogStream = null;
         }
-        this.streamTimestamp = Date.now();
         return { success: true, message: 'Container stopped' };
     }
 
@@ -231,7 +257,6 @@ class DockerService extends EventEmitter {
 
     private async invalidateStream() {
         const oldStream = this.currentLogStream
-        this.streamTimestamp = Date.now()
 
         // Don't clear history - keep it for clients that reconnect
         // History will naturally be updated with new logs
